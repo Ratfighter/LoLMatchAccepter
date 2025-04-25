@@ -5,4 +5,4 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Critical Vulnerability", "S4830:Server certificates should be verified during SSL/TLS connections", Justification = "<Pending>", Scope = "member", Target = "~M:LeagueMatchAccepter.LCU.#ctor")]
+[assembly: SuppressMessage("Critical Vulnerability", "S4830:Server certificates should be verified during SSL/TLS connections", Justification = "Localhost :)", Scope = "member", Target = "~M:LeagueMatchAccepter.LCU.#ctor")]
