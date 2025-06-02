@@ -5,5 +5,5 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Critical Vulnerability", "S4830:Server certificates should be verified during SSL/TLS connections", Justification = "Localhost :)", Scope = "member", Target = "~M:LeagueMatchAccepter.LCU.#ctor")]
+[assembly: SuppressMessage("Critical Vulnerability", "S4830:Server certificates should be verified during SSL/TLS connections", Justification = "Localhost :)", Scope = "member", Target = "~M:LeagueMatchAccepter.LcuClient.#ctor")]
 [assembly: SuppressMessage("Minor Code Smell", "S1075:URIs should not be hardcoded", Justification = "<Pending>", Scope = "member", Target = "~F:LoLMatchAccepterNet.Notificator.NotificatorUrl")]

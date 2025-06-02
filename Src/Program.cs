@@ -15,7 +15,7 @@ namespace LoLMatchAccepterNet
                 bool manualExitInitiated = false;
                 while (!manualExitInitiated)
                 {
-                    using LCU lcu = new();
+                    using LcuClient lcu = new();
                     if (!lcu.IsClientFound())
                     {
                         Console.WriteLine("Failed to find League client. Retrying in 5 seconds...");

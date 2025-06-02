@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LoLMatchAccepterNet.Api;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -6,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace LoLMatchAccepterNet
+namespace LoLMatchAccepterNet.LCU
 {
     public class Game(HttpClient client, string baseUrl)
     {
@@ -18,11 +19,12 @@ namespace LoLMatchAccepterNet
             try
             {
                 string gamePhase = await GetGamePhase();
-                if (gamePhase == "InProgress" || gamePhase == "ChampSelect" ||
+                if(gamePhase == "ChampSelect" || gamePhase == "InProgress" ||
                     gamePhase == "GameStart" || gamePhase == "LoadingScreen")
                 {
                     return true;
                 }
+
                 var spectatorResponse = await _client.GetAsync($"{_baseUrl}/lol-spectator/v1/spectate/active-games/for-summoner/0");
                 if (spectatorResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {

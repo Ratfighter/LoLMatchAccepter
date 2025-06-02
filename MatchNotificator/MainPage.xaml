@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MatchNotificator.MainPage">
+
+    <ScrollView>
+        <VerticalStackLayout
+            Padding="30,0"
+            Spacing="25">
+            <Label
+                Text="Match Notificator"
+                Style="{StaticResource Headline}"
+                SemanticProperties.HeadingLevel="Level1" />
+
+            <Label
+                x:Name="StatusLabel"
+                SemanticProperties.HeadingLevel="Level2"/>
+
+			<Entry
+                x:Name="IpInput"
+                Placeholder="Enter IP address of PC"
+                Keyboard="Text"
+                HorizontalOptions="Fill" />
+
+			<Button
+                x:Name="ConnectBtn"
+                Text="Connect" 
+                SemanticProperties.Hint="Click to connect to the match accepter app."
+                Clicked="OnConnectClicked"
+                HorizontalOptions="Fill" />
+
+			<Button
+                x:Name="DisconnectBtn"
+                IsVisible="False"
+                Text="Disconnect" 
+                SemanticProperties.Hint="Disconnect from the match accepter app."
+                Clicked="OnDisconnectClicked"
+                HorizontalOptions="Fill" />
+		</VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

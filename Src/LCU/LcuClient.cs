@@ -1,4 +1,5 @@
-using LoLMatchAccepterNet;
+using LoLMatchAccepterNet.Api;
+using LoLMatchAccepterNet.LCU;
 using System;
 using System.Diagnostics;
 using System.Net.Http;
@@ -10,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace LeagueMatchAccepter
 {
-    public partial class LCU : IDisposable
+    public partial class LcuClient : IDisposable
     {
         private string? Port { get; init; } = null!;
         private string? Password { get; init; } = null!;
@@ -21,10 +22,11 @@ namespace LeagueMatchAccepter
         [GeneratedRegex("--app-port=([0-9]*)")]
         private static partial Regex PortRegex();
 
-        private readonly HttpClient client;
+        private readonly NotificatorServer _notificator;
+        private readonly HttpClient _client;
         private bool disposedValue;
 
-        public LCU()
+        public LcuClient()
         {
             // Find League of Legends client process
             Process[] processes = Process.GetProcessesByName("LeagueClientUx");
@@ -33,7 +35,7 @@ namespace LeagueMatchAccepter
             {
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true
             };
-            client = new HttpClient(handler);
+            _client = new HttpClient(handler);
 
             if (processes.Length == 0)
             {
@@ -62,6 +64,7 @@ namespace LeagueMatchAccepter
 
                     if (IsClientFound())
                     {
+                        _notificator = new();
                         break;
                     }
                     Console.WriteLine($"League client found! Connected to port: {Port}");
@@ -93,12 +96,11 @@ namespace LeagueMatchAccepter
         {
             // Set up basic authentication
             string auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"riot:{Password}"));
-            client.DefaultRequestHeaders.Add("Authorization", $"Basic {auth}");
+            _client.DefaultRequestHeaders.Add("Authorization", $"Basic {auth}");
             
             string baseUrl = $"https://127.0.0.1:{Port}";
 
-            var game = new Game(client, baseUrl);
-
+            Game game = new(_client, baseUrl);
 
             Console.WriteLine("Auto-accept running. Press ESC to exit.");
             Console.WriteLine("Waiting for match...");
@@ -107,7 +109,9 @@ namespace LeagueMatchAccepter
             {
                 // Check if ESC key is pressed to exit
                 if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
+                {
                     return true;
+                }
 
                 bool inGame = await game.IsActive();
 
@@ -115,6 +119,7 @@ namespace LeagueMatchAccepter
                 {
                     // If we're in a game, don't check for match acceptance
                     Console.WriteLine("Active game detected. Waiting until game ends...");
+                    await _notificator.SendNotification();
                     await game.WaitUntilGameEnds();
                     Console.WriteLine("Game ended. Resuming auto-accept...");
                 }
@@ -122,7 +127,7 @@ namespace LeagueMatchAccepter
                 try
                 {
                     // Check if match is found
-                    var matchResponse = await client.GetAsync($"{baseUrl}/lol-matchmaking/v1/search");
+                    var matchResponse = await _client.GetAsync($"{baseUrl}/lol-matchmaking/v1/search");
 
                     if (matchResponse.IsSuccessStatusCode)
                     {
@@ -135,7 +140,7 @@ namespace LeagueMatchAccepter
                             Console.WriteLine("Match found! Accepting...");
 
                             // Accept the match
-                            var acceptResponse = await client.PostAsync(
+                            var acceptResponse = await _client.PostAsync(
                                 $"{baseUrl}/lol-matchmaking/v1/ready-check/accept",
                                 null
                             );
@@ -145,7 +150,7 @@ namespace LeagueMatchAccepter
                                 Console.WriteLine("Match accepted successfully!");
 
                                 // Also check for ready-check status to confirm
-                                var readyCheckResponse = await client.GetAsync($"{baseUrl}/lol-matchmaking/v1/ready-check");
+                                var readyCheckResponse = await _client.GetAsync($"{baseUrl}/lol-matchmaking/v1/ready-check");
                                 if (readyCheckResponse.IsSuccessStatusCode)
                                 {
                                     string readyCheckContent = await readyCheckResponse.Content.ReadAsStringAsync();
@@ -179,7 +184,7 @@ namespace LeagueMatchAccepter
             {
                 if (disposing)
                 {
-                    client.Dispose();
+                    _client.Dispose();
                 }
                 disposedValue = true;
             }
