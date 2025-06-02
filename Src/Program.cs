@@ -6,24 +6,27 @@ namespace LoLMatchAccepterNet
     {
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("League of Legends Match Auto-Accepter (API Method)");
+            Console.WriteLine("League of Legends Match Auto-Accepter");
             Console.WriteLine("-----------------------------------------------");
 
             try
             {
-                LCU lcu = new();
                 Console.WriteLine("Searching for League of Legends client...");
-
-                if (string.IsNullOrEmpty(lcu.Port) || string.IsNullOrEmpty(lcu.Password))
+                bool manualExitInitiated = false;
+                while (!manualExitInitiated)
                 {
-                    Console.WriteLine("Failed to find League client. Make sure it's running.");
-                    Console.WriteLine("Press any key to exit...");
-                    Console.ReadKey();
-                    return;
-                }
+                    using LcuClient lcu = new();
+                    if (!lcu.IsClientFound())
+                    {
+                        Console.WriteLine("Failed to find League client. Retrying in 5 seconds...");
+                        Thread.Sleep(5000);
+                        continue;
+                    }
 
-                Console.WriteLine($"League client found! Connected to port: {lcu.Port}");
-                await lcu.AutoAccept();
+                    manualExitInitiated = await lcu.AutoAccept();
+                }
+                Console.WriteLine("Auto-accepter stopped. Press any key to exit...");
+                Console.ReadKey();
             }
             catch (Exception ex)
             {

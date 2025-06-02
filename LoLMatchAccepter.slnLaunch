@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "LaunchApps",
+    "Projects": [
+      {
+        "Path": "Src\\LoLMatchAccepterNet.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "MatchNotificator\\MatchNotificator.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]
