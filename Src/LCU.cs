@@ -10,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace LeagueMatchAccepter
 {
-    public partial class LCU
+    public partial class LCU : IDisposable
     {
-        public string? Port { get; init; } = null!;
-        public string? Password { get; init; } = null!;
+        private string? Port { get; init; } = null!;
+        private string? Password { get; init; } = null!;
 
         [GeneratedRegex("--remoting-auth-token=([\\w-]*)")]
         private static partial Regex PasswordRegex();
@@ -22,6 +22,7 @@ namespace LeagueMatchAccepter
         private static partial Regex PortRegex();
 
         private readonly HttpClient client;
+        private bool disposedValue;
 
         public LCU()
         {
@@ -59,10 +60,11 @@ namespace LeagueMatchAccepter
                         Password = passwordMatch.Groups[1].Value;
                     }
 
-                    if (!string.IsNullOrEmpty(Port) && !string.IsNullOrEmpty(Password))
+                    if (IsClientFound())
                     {
                         break;
                     }
+                    Console.WriteLine($"League client found! Connected to port: {Port}");
                 }
                 catch
                 {
@@ -71,27 +73,23 @@ namespace LeagueMatchAccepter
             }
         }
 
-        private static string GetCommandLine(int processId)
+        public bool IsClientFound()
         {
-            using (var process = Process.GetProcessById(processId))
-            {
-                using (var searcher = new System.Management.ManagementObjectSearcher(
-                    $"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {processId}"))
-                {
-                    using (var objects = searcher.Get())
-                    {
-                        foreach (var obj in objects)
-                        {
-                            return obj["CommandLine"]?.ToString() ?? string.Empty;
-                        }
-                    }
-                }
-            }
-
-            return string.Empty;
+            return !string.IsNullOrEmpty(Port) && !string.IsNullOrEmpty(Password);
         }
 
-        public async Task AutoAccept()
+        private static string GetCommandLine(int processId)
+        {
+            using var process = Process.GetProcessById(processId);
+            using var searcher = new System.Management.ManagementObjectSearcher(
+                $"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {processId}");
+            using var objects = searcher.Get();
+            var enumerator = objects.GetEnumerator();
+            enumerator.MoveNext();
+            return enumerator.Current["CommandLine"]?.ToString() ?? string.Empty;
+        }
+
+        public async Task<bool> AutoAccept()
         {
             // Set up basic authentication
             string auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"riot:{Password}"));
@@ -109,7 +107,7 @@ namespace LeagueMatchAccepter
             {
                 // Check if ESC key is pressed to exit
                 if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
-                    break;
+                    return true;
 
                 bool inGame = await game.IsActive();
 
@@ -167,15 +165,31 @@ namespace LeagueMatchAccepter
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error communicating with League client: {ex.Message}");
-                    // Wait a bit longer if there was an error
                     Thread.Sleep(3000);
+                    return false;
                 }
 
                 Thread.Sleep(1000); // Check every second
             }
+        }
 
-            Console.WriteLine("Auto-accepter stopped. Press any key to exit...");
-            Console.ReadKey();
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    client.Dispose();
+                }
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
