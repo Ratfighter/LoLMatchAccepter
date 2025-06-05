@@ -1,5 +1,6 @@
 ﻿using LoLMatchAccepter.Common;
 using MatchNotificator.Services;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Net;
 
@@ -27,7 +28,7 @@ namespace MatchNotificator
 
         }
 
-        private void OnConnectClicked(object sender, EventArgs e)
+        private async void OnConnectClicked(object sender, EventArgs e)
         {
             string ipAddressText = IpInput.Text.Trim();
             if (!IPAddress.TryParse(ipAddressText, out _))
@@ -35,18 +36,6 @@ namespace MatchNotificator
                 ClearEntry();
                 return;
             }
-            ConnectToMatchAccepter(ipAddressText);
-        }
-
-        private void OnDisconnectClicked(object sender, EventArgs e)
-        {
-            StopHub();
-            ClearEntry();
-            DisconnectedState();
-        }
-
-        private async void ConnectToMatchAccepter(string ipAddressText, bool showPopup = true)
-        {
             if (string.IsNullOrWhiteSpace(ipAddressText))
             {
                 return;
@@ -58,6 +47,7 @@ namespace MatchNotificator
 
             try
             {
+                ConnectBtn.IsEnabled = false;
                 await connection.StartAsync();
                 ConnectedState();
                 Preferences.Set(IpAddressPreferenceKey, ipAddressText);
@@ -65,16 +55,25 @@ namespace MatchNotificator
                 {
                     NotificationManagerService.Instance.NotifyUser();
                 });
+                connection.Closed += async (error) =>
+                {
+                    Dispatcher.Dispatch(async () => {
+                        await DisplayAlert("Connection Closed", $"Connection to {signalrHub} was closed.", "Ok");
+                        DisconnectedState();
+                    });
+                };
 
             }
             catch (Exception exc)
             {
-                ClearEntry();
-                if (showPopup)
-                {
-                    await DisplayAlert("Error", $"Could not connect to {signalrHub}.\nCause: {exc.Message}", "Ok");
-                }
+                await DisplayAlert("Error", $"Could not connect to {signalrHub}.\nCause: {exc.Message}", "Ok");
+                ConnectBtn.IsEnabled = true;
             }
+        }
+
+        private void OnDisconnectClicked(object sender, EventArgs e)
+        {
+            StopHub();
         }
 
         private void ClearEntry()
@@ -86,14 +85,17 @@ namespace MatchNotificator
         private void ConnectedState()
         {
             IpInput.IsVisible = false;
+            ConnectBtn.IsEnabled = false;
             ConnectBtn.IsVisible = false;
             DisconnectBtn.IsVisible = true;
+            DisconnectBtn.IsEnabled = true;
             StatusLabel.Text = "Connected to Lol Match Accepter!";
         }
 
         private void DisconnectedState()
         {
             IpInput.IsVisible = true;
+            ConnectBtn.IsEnabled = true;
             ConnectBtn.IsVisible = true;
             DisconnectBtn.IsVisible = false;
             StatusLabel.Text = "Connect to LolMatchAccepter to get notifications!";
@@ -101,20 +103,11 @@ namespace MatchNotificator
 
         private void StopHub()
         {
-            if(connection == null)
-            {
-                return;
-            }
+            ArgumentNullException.ThrowIfNull(connection);
             if(connection.State != HubConnectionState.Disconnected)
             {
                 connection.StopAsync().GetAwaiter().GetResult();
             }
-            ValueTask? connectionDisposal = connection.DisposeAsync();
-            if (connectionDisposal.HasValue)
-            {
-                connectionDisposal.Value.GetAwaiter().GetResult();
-            }
-            connection = null;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -123,7 +116,15 @@ namespace MatchNotificator
             {
                 if (disposing)
                 {
-                    StopHub();
+                    if(connection != null)
+                    {
+                        StopHub();
+                        ValueTask? connectionDisposal = connection.DisposeAsync();
+                        if (connectionDisposal.HasValue)
+                        {
+                            connectionDisposal.Value.GetAwaiter().GetResult();
+                        }
+                    }
                 }
 
                 connection = null;

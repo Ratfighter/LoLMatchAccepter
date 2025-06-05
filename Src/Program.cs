@@ -1,4 +1,5 @@
 ﻿using LeagueMatchAccepter;
+using LoLMatchAccepterNet.Api;
 
 namespace LoLMatchAccepterNet
 {
@@ -13,17 +14,20 @@ namespace LoLMatchAccepterNet
             {
                 Console.WriteLine("Searching for League of Legends client...");
                 bool manualExitInitiated = false;
-                while (!manualExitInitiated)
+                using (NotificatorServer notificatorServer = new())
                 {
-                    using LcuClient lcu = new();
-                    if (!lcu.IsClientFound())
+                    while (!manualExitInitiated)
                     {
-                        Console.WriteLine("Failed to find League client. Retrying in 5 seconds...");
-                        Thread.Sleep(5000);
-                        continue;
+                        using LcuClient lcu = new();
+                        if (!lcu.IsClientFound())
+                        {
+                            Console.WriteLine("Failed to find League client. Retrying in 5 seconds...");
+                            Thread.Sleep(5000);
+                            continue;
+                        }
+                        lcu.MatchFound += notificatorServer.SendNotification;
+                        manualExitInitiated = await lcu.AutoAccept();
                     }
-
-                    manualExitInitiated = await lcu.AutoAccept();
                 }
                 Console.WriteLine("Auto-accepter stopped. Press any key to exit...");
                 Console.ReadKey();
