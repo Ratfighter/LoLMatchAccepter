@@ -47,26 +47,29 @@ namespace MatchNotificator
 
             try
             {
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
                 ConnectBtn.IsEnabled = false;
-                await connection.StartAsync();
+                await connection.StartAsync(cts.Token);
                 ConnectedState();
                 Preferences.Set(IpAddressPreferenceKey, ipAddressText);
                 connection.On(NotificationServerContants.NotificationEventName, () =>
                 {
                     NotificationManagerService.Instance.NotifyUser();
                 });
-                connection.Closed += async (error) =>
+                connection.Closed += (error) =>
                 {
-                    Dispatcher.Dispatch(async () => {
+                    Dispatcher.Dispatch(async () =>
+                    {
                         await DisplayAlert("Connection Closed", $"Connection to {signalrHub} was closed.", "Ok");
                         DisconnectedState();
                     });
+                    return Task.CompletedTask;
                 };
 
             }
             catch (Exception exc)
             {
-                await DisplayAlert("Error", $"Could not connect to {signalrHub}.\nCause: {exc.Message}", "Ok");
+                await DisplayAlert("Error", $"Could not connect to {signalrHub}.", "Ok");
                 ConnectBtn.IsEnabled = true;
             }
         }
