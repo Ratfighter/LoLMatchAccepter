@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="MatchNotificator.MainPage">
 
-    <ScrollView>
+	<ScrollView>
         <VerticalStackLayout
             Padding="30,0"
             Spacing="25">

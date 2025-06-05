@@ -13,6 +13,7 @@ namespace LeagueMatchAccepter
 {
     public partial class LcuClient : IDisposable
     {
+        public event EventHandler? MatchFound;
         private string? Port { get; init; } = null!;
         private string? Password { get; init; } = null!;
 
@@ -22,7 +23,6 @@ namespace LeagueMatchAccepter
         [GeneratedRegex("--app-port=([0-9]*)")]
         private static partial Regex PortRegex();
 
-        private readonly NotificatorServer _notificator;
         private readonly HttpClient _client;
         private bool disposedValue;
 
@@ -64,7 +64,6 @@ namespace LeagueMatchAccepter
 
                     if (IsClientFound())
                     {
-                        _notificator = new();
                         break;
                     }
                     Console.WriteLine($"League client found! Connected to port: {Port}");
@@ -113,13 +112,22 @@ namespace LeagueMatchAccepter
                     return true;
                 }
 
+                string? gamePhase = await game.GetGamePhase();
+
+                if(gamePhase == Game.ChampSelect)
+                {
+                    Console.WriteLine("Currently in champion selection screen.");
+                    MatchFound?.Invoke(null, EventArgs.Empty);
+                    await game.WaitUntilPhaseEnds(Game.ChampSelect);
+                    Console.WriteLine("Champion selection is over.");
+                }
+
                 bool inGame = await game.IsActive();
 
                 if (inGame)
                 {
                     // If we're in a game, don't check for match acceptance
                     Console.WriteLine("Active game detected. Waiting until game ends...");
-                    await _notificator.SendNotification();
                     await game.WaitUntilGameEnds();
                     Console.WriteLine("Game ended. Resuming auto-accept...");
                 }
@@ -148,33 +156,18 @@ namespace LeagueMatchAccepter
                             if (acceptResponse.IsSuccessStatusCode)
                             {
                                 Console.WriteLine("Match accepted successfully!");
-
-                                // Also check for ready-check status to confirm
-                                var readyCheckResponse = await _client.GetAsync($"{baseUrl}/lol-matchmaking/v1/ready-check");
-                                if (readyCheckResponse.IsSuccessStatusCode)
-                                {
-                                    string readyCheckContent = await readyCheckResponse.Content.ReadAsStringAsync();
-                                    JsonDocument readyCheckDoc = JsonDocument.Parse(readyCheckContent);
-
-                                    if (readyCheckDoc.RootElement.TryGetProperty("state", out JsonElement state))
-                                    {
-                                        Console.WriteLine($"Ready check state: {state.GetString()}");
-                                    }
-                                }
-
-                                Thread.Sleep(5000); // Wait 5 seconds before checking again
                             }
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
-                    Console.WriteLine($"Error communicating with League client: {ex.Message}");
-                    Thread.Sleep(3000);
+                    Console.WriteLine($"Error communicating with League client.");
+                    await Task.Delay(6000);
                     return false;
                 }
 
-                Thread.Sleep(1000); // Check every second
+                await Task.Delay(1000);
             }
         }
 
@@ -185,6 +178,7 @@ namespace LeagueMatchAccepter
                 if (disposing)
                 {
                     _client.Dispose();
+                    MatchFound = null;
                 }
                 disposedValue = true;
             }

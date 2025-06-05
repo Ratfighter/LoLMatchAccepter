@@ -11,6 +11,14 @@ namespace LoLMatchAccepterNet.LCU
 {
     public class Game(HttpClient client, string baseUrl)
     {
+        public const string InProgress = "InProgress";
+        public const string GameStart = "GameStart";
+        public const string LoadingScreen = "LoadingScreen";
+        public const string None = "None";
+        public const string Lobby = "Lobby";
+        public const string Matchmaking = "Matchmaking";
+        public const string ChampSelect = "ChampSelect";
+
         private readonly HttpClient _client = client;
         private readonly string _baseUrl = baseUrl;
 
@@ -19,8 +27,9 @@ namespace LoLMatchAccepterNet.LCU
             try
             {
                 string gamePhase = await GetGamePhase();
-                if(gamePhase == "ChampSelect" || gamePhase == "InProgress" ||
-                    gamePhase == "GameStart" || gamePhase == "LoadingScreen")
+
+                if (gamePhase == InProgress ||
+                    gamePhase == GameStart || gamePhase == LoadingScreen)
                 {
                     return true;
                 }
@@ -54,12 +63,15 @@ namespace LoLMatchAccepterNet.LCU
 
                     string gamePhase = await GetGamePhase();
 
+                    //Game not found
+                    if (string.IsNullOrEmpty(gamePhase))
+                    {
+                        return;
+                    }
+
                     if (gamePhase == "None" || gamePhase == "Lobby" || gamePhase == "Matchmaking")
                     {
                         gameEnded = true;
-                        Console.WriteLine("Game has ended.");
-                        // Add a small delay to make sure all systems register the game as ended
-                        Thread.Sleep(3000);
                     }
                 }
                 catch (Exception ex)
@@ -81,7 +93,30 @@ namespace LoLMatchAccepterNet.LCU
             }
         }
 
-        private async Task<string> GetGamePhase()
+        public async Task WaitUntilPhaseEnds(params string[] gamePhases)
+        {
+            while (true)
+            {
+                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
+                    return;
+
+                try
+                {
+                    string currentPhase = await GetGamePhase();
+                    if (!gamePhases.Contains(currentPhase))
+                    {
+                        return;
+                    }
+                    await Task.Delay(1000);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error checking game phase: {ex.Message}");
+                }
+            }
+        }
+
+        public async Task<string> GetGamePhase()
         {
             var gameSessionResponse = await _client.GetAsync($"{_baseUrl}/lol-gameflow/v1/session");
             if (gameSessionResponse.IsSuccessStatusCode)

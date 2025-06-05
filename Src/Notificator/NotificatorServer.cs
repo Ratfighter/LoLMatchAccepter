@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -12,10 +13,12 @@ using System.Threading.Tasks;
 
 namespace LoLMatchAccepterNet.Api
 {
-    public sealed class NotificatorServer
+    public sealed class NotificatorServer : IDisposable
     {
         private readonly IWebHost _host;
         private readonly IHubContext<NotificatorHub> _notificationHub;
+        private bool disposedValue;
+
         public NotificatorServer()
         {
             var builder = new WebHostBuilder();
@@ -42,15 +45,35 @@ namespace LoLMatchAccepterNet.Api
             Console.WriteLine($"Started SignalR notificator hub on port {NotificationServerContants.HubPort}.");
         }
 
-        public void Stop()
+        private void Stop()
         {
             _host.StopAsync().GetAwaiter().GetResult();
             _host.Dispose();
         }
 
-        public Task SendNotification()
+        public async void SendNotification(object? sender, EventArgs e)
         {
-            return _notificationHub.Clients.All.SendAsync(NotificationServerContants.NotificationEventName);
+            await _notificationHub.Clients.All.SendAsync(NotificationServerContants.NotificationEventName);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    Stop();
+                }
+
+                disposedValue = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
