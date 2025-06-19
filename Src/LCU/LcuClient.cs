@@ -126,7 +126,7 @@ namespace LeagueMatchAccepter
                             MatchFound?.Invoke(null, EventArgs.Empty);
                             await game.WaitUntilPhaseEnds(Game.ChampSelect);
                         }
-                        else if (currentPhase == Game.InProgress) //Only works for gamemodes that instantly get you in-game (e.g.: Swift, Brawl)
+                        else if (currentPhase == Game.LoadingScreen || currentPhase == Game.InProgress) //Only works for gamemodes that instantly get you in-game (e.g.: Swift, Brawl)
                         {
                             MatchFound?.Invoke(null, EventArgs.Empty);
                         }
