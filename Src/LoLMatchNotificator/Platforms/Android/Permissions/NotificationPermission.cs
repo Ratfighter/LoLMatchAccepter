@@ -1,8 +1,9 @@
 ﻿using Android;
+using static Microsoft.Maui.ApplicationModel.Permissions;
 
-namespace MatchNotificator.Platforms.Android
+namespace MatchNotificator.Platforms.Android.Permissions
 {
-    public class NotificationPermission : Permissions.BasePlatformPermission
+    public class NotificationPermission : BasePlatformPermission
     {
         public override (string androidPermission, bool isRuntime)[] RequiredPermissions
         {

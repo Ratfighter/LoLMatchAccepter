@@ -1,5 +1,5 @@
 ﻿using LeagueMatchAccepter;
-using LoLMatchAccepterNet.Api;
+using LoLMatchAccepterNet.Notificator;
 
 namespace LoLMatchAccepterNet
 {

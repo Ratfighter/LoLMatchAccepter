@@ -1,4 +1,4 @@
-﻿using MatchNotificator.Services;
+﻿using MatchNotificator.Managers;
 using Microsoft.Extensions.Logging;
 
 namespace MatchNotificator

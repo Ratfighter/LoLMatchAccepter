@@ -68,7 +68,7 @@ namespace MatchNotificator.Platforms.Android.Services
                 {
                     Description = channelDescription
                 };
-                              // Register the channel
+                // Register the channel
                 NotificationManager manager = (NotificationManager)Platform.AppContext.GetSystemService(Context.NotificationService)!;
                 manager.CreateNotificationChannel(channel);
 #pragma warning restore CA1416 // Validate platform compatibility

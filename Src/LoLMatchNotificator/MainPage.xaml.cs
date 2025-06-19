@@ -1,6 +1,5 @@
 ﻿using LoLMatchAccepter.Common;
-using MatchNotificator.Services;
-using Microsoft.AspNetCore.Http.Connections;
+using MatchNotificator.Managers;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Net;
 
@@ -107,7 +106,7 @@ namespace MatchNotificator
         private void StopHub()
         {
             ArgumentNullException.ThrowIfNull(connection);
-            if(connection.State != HubConnectionState.Disconnected)
+            if (connection.State != HubConnectionState.Disconnected)
             {
                 connection.StopAsync().GetAwaiter().GetResult();
             }
@@ -119,7 +118,7 @@ namespace MatchNotificator
             {
                 if (disposing)
                 {
-                    if(connection != null)
+                    if (connection != null)
                     {
                         StopHub();
                         ValueTask? connectionDisposal = connection.DisposeAsync();
