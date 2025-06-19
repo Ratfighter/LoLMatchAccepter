@@ -76,7 +76,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\LoLMatchAccepter.Common\LoLMatchAccepter.Common.csproj" />
+	  <ProjectReference Include="..\LoLMatchAccepterNet.Common\LoLMatchAccepterNet.Common.csproj" />
 	</ItemGroup>
 
 </Project>

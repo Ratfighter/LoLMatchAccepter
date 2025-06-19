@@ -1,11 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LoLMatchAccepterNet.Api
+namespace LoLMatchAccepterNet.Notificator
 {
     public class NotificatorHub : Hub
     {

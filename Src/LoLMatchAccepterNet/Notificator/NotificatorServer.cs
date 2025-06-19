@@ -1,17 +1,10 @@
 ﻿using LoLMatchAccepter.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace LoLMatchAccepterNet.Api
+namespace LoLMatchAccepterNet.Notificator
 {
     public sealed class NotificatorServer : IDisposable
     {
