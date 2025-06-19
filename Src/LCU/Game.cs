@@ -62,9 +62,6 @@ namespace LoLMatchAccepterNet.LCU
 
             while (!gameEnded)
             {
-                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
-                    return;
-
                 try
                 {
 
@@ -84,31 +81,30 @@ namespace LoLMatchAccepterNet.LCU
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error checking if game ended: {ex.Message}");
+                    return;
                 }
 
                 await Task.Delay(1000);
             }
         }
 
-        public async Task WaitUntilPhaseEnds(params string[] gamePhases)
+        public async Task<string> WaitUntilPhaseEnds(params string[] gamePhases)
         {
             while (true)
             {
-                if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
-                    return;
-
                 try
                 {
                     string currentPhase = await GetGamePhase();
                     if (!gamePhases.Contains(currentPhase))
                     {
-                        return;
+                        return currentPhase;
                     }
                     await Task.Delay(1000);
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error checking game phase: {ex.Message}");
+                    return string.Empty;
                 }
             }
         }
@@ -131,7 +127,7 @@ namespace LoLMatchAccepterNet.LCU
             return string.Empty;
         }
 
-        public async Task<bool> WaitForMatch()
+        public async Task<bool> WaitForQueue()
         {
             var matchResponse = await _client.GetAsync($"{_baseUrl}/lol-matchmaking/v1/search");
             if (matchResponse.IsSuccessStatusCode)

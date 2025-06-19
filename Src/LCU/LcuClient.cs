@@ -114,13 +114,22 @@ namespace LeagueMatchAccepter
 
                 try
                 {
-                    bool isMatchAccepted = await game.WaitForMatch();
+                    bool isMatchAccepted = await game.WaitForQueue();
 
                     if (isMatchAccepted)
                     {
-                        Console.WriteLine("Sending notification...");
-                        MatchFound?.Invoke(null, EventArgs.Empty);
-                        await game.WaitUntilPhaseEnds(Game.ReadyCheck, Game.ChampSelect);
+                        string currentPhase = await game.WaitUntilPhaseEnds(Game.ReadyCheck);
+
+                        if (currentPhase == Game.ChampSelect)
+                        {
+                            Console.WriteLine("Currently in champ select...");
+                            MatchFound?.Invoke(null, EventArgs.Empty);
+                            await game.WaitUntilPhaseEnds(Game.ChampSelect);
+                        }
+                        else if (currentPhase == Game.InProgress) //Only works for gamemodes that instantly get you in-game (e.g.: Swift, Brawl)
+                        {
+                            MatchFound?.Invoke(null, EventArgs.Empty);
+                        }
                     }
 
                     bool inGame = await game.IsActive();
