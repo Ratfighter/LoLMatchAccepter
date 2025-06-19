@@ -9,18 +9,25 @@ using System.Threading.Tasks;
 
 namespace LoLMatchAccepterNet.LCU
 {
-    public class Game(HttpClient client, string baseUrl)
+    public class Game
     {
         public const string InProgress = "InProgress";
         public const string GameStart = "GameStart";
         public const string LoadingScreen = "LoadingScreen";
         public const string None = "None";
         public const string Lobby = "Lobby";
+        public const string ReadyCheck = "ReadyCheck";
         public const string Matchmaking = "Matchmaking";
         public const string ChampSelect = "ChampSelect";
 
-        private readonly HttpClient _client = client;
-        private readonly string _baseUrl = baseUrl;
+        private readonly HttpClient _client;
+        private readonly string _baseUrl;
+
+        public Game(HttpClient client, int port)
+        {
+            _client = client;
+            this._baseUrl = $"https://127.0.0.1:{port}";
+        }
 
         public async Task<bool> IsActive()
         {
@@ -79,17 +86,7 @@ namespace LoLMatchAccepterNet.LCU
                     Console.WriteLine($"Error checking if game ended: {ex.Message}");
                 }
 
-                if (!gameEnded)
-                {
-                    // Wait for 30 seconds before checking again to reduce API calls during a game
-                    for (int i = 0; i < 15; i++)
-                    {
-                        // Check for ESC key every 2 seconds
-                        if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
-                            return;
-                        Thread.Sleep(2000);
-                    }
-                }
+                await Task.Delay(1000);
             }
         }
 
@@ -132,6 +129,33 @@ namespace LoLMatchAccepterNet.LCU
                 }
             }
             return string.Empty;
+        }
+
+        public async Task<bool> WaitForMatch()
+        {
+            var matchResponse = await _client.GetAsync($"{_baseUrl}/lol-matchmaking/v1/search");
+            if (matchResponse.IsSuccessStatusCode)
+            {
+                string content = await matchResponse.Content.ReadAsStringAsync();
+                JsonDocument doc = JsonDocument.Parse(content);
+
+                doc.RootElement.TryGetProperty("searchState", out JsonElement searchState);
+                if (searchState.GetString() == "Found")
+                {
+                    Console.WriteLine("Match found! Accepting...");
+                    var acceptResponse = await _client.PostAsync(
+                        $"{_baseUrl}/lol-matchmaking/v1/ready-check/accept",
+                        null
+                    );
+
+                    if (acceptResponse.IsSuccessStatusCode)
+                    {
+                        Console.WriteLine("Match accepted successfully!");
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

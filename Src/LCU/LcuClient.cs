@@ -96,10 +96,10 @@ namespace LeagueMatchAccepter
             // Set up basic authentication
             string auth = Convert.ToBase64String(Encoding.UTF8.GetBytes($"riot:{Password}"));
             _client.DefaultRequestHeaders.Add("Authorization", $"Basic {auth}");
-            
-            string baseUrl = $"https://127.0.0.1:{Port}";
 
-            Game game = new(_client, baseUrl);
+            int port = int.Parse(Port!);
+
+            Game game = new(_client, port);
 
             Console.WriteLine("Auto-accept running. Press ESC to exit.");
             Console.WriteLine("Waiting for match...");
@@ -112,52 +112,25 @@ namespace LeagueMatchAccepter
                     return true;
                 }
 
-                string? gamePhase = await game.GetGamePhase();
-
-                if(gamePhase == Game.ChampSelect)
-                {
-                    Console.WriteLine("Currently in champion selection screen.");
-                    MatchFound?.Invoke(null, EventArgs.Empty);
-                    await game.WaitUntilPhaseEnds(Game.ChampSelect);
-                    Console.WriteLine("Champion selection is over.");
-                }
-
-                bool inGame = await game.IsActive();
-
-                if (inGame)
-                {
-                    // If we're in a game, don't check for match acceptance
-                    Console.WriteLine("Active game detected. Waiting until game ends...");
-                    await game.WaitUntilGameEnds();
-                    Console.WriteLine("Game ended. Resuming auto-accept...");
-                }
-
                 try
                 {
-                    // Check if match is found
-                    var matchResponse = await _client.GetAsync($"{baseUrl}/lol-matchmaking/v1/search");
+                    bool isMatchAccepted = await game.WaitForMatch();
 
-                    if (matchResponse.IsSuccessStatusCode)
+                    if (isMatchAccepted)
                     {
-                        string content = await matchResponse.Content.ReadAsStringAsync();
-                        JsonDocument doc = JsonDocument.Parse(content);
+                        Console.WriteLine("Sending notification...");
+                        MatchFound?.Invoke(null, EventArgs.Empty);
+                        await game.WaitUntilPhaseEnds(Game.ReadyCheck, Game.ChampSelect);
+                    }
 
-                        if (doc.RootElement.TryGetProperty("searchState", out JsonElement searchState) &&
-                            searchState.GetString() == "Found")
-                        {
-                            Console.WriteLine("Match found! Accepting...");
+                    bool inGame = await game.IsActive();
 
-                            // Accept the match
-                            var acceptResponse = await _client.PostAsync(
-                                $"{baseUrl}/lol-matchmaking/v1/ready-check/accept",
-                                null
-                            );
-
-                            if (acceptResponse.IsSuccessStatusCode)
-                            {
-                                Console.WriteLine("Match accepted successfully!");
-                            }
-                        }
+                    if (inGame)
+                    {
+                        // If we're in a game, don't check for match acceptance
+                        Console.WriteLine("Active game detected. Waiting until game ends...");
+                        await game.WaitUntilGameEnds();
+                        Console.WriteLine("Game ended. Resuming auto-accept...");
                     }
                 }
                 catch (Exception)
@@ -167,7 +140,7 @@ namespace LeagueMatchAccepter
                     return false;
                 }
 
-                await Task.Delay(1000);
+                await Task.Delay(500);
             }
         }
 

@@ -14,23 +14,31 @@ namespace LoLMatchAccepterNet
             {
                 Console.WriteLine("Searching for League of Legends client...");
                 bool manualExitInitiated = false;
+                bool isRetryingActive = false;
                 using (NotificatorServer notificatorServer = new())
                 {
                     while (!manualExitInitiated)
                     {
-                        using LcuClient lcu = new();
-                        if (!lcu.IsClientFound())
+                        using (LcuClient lcu = new())
                         {
-                            Console.WriteLine("Failed to find League client. Retrying in 5 seconds...");
-                            Thread.Sleep(5000);
-                            continue;
+                            if (!lcu.IsClientFound())
+                            {
+                                if (!isRetryingActive)
+                                {
+                                    Console.WriteLine("Failed to find League client. Retrying every 5 seconds...");
+                                    isRetryingActive = true;
+                                }
+                                await Task.Delay(5000); // Wait before retrying
+                                continue;
+                            }
+                            isRetryingActive = false; // Reset flag if client found
+                            lcu.MatchFound += notificatorServer.SendNotification;
+                            manualExitInitiated = await lcu.AutoAccept();
                         }
-                        lcu.MatchFound += notificatorServer.SendNotification;
-                        manualExitInitiated = await lcu.AutoAccept();
                     }
+                    Console.WriteLine("Auto-accepter stopped. Press any key to exit...");
+                    Console.ReadKey();
                 }
-                Console.WriteLine("Auto-accepter stopped. Press any key to exit...");
-                Console.ReadKey();
             }
             catch (Exception ex)
             {
