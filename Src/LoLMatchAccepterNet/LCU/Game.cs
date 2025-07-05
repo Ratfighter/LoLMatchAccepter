@@ -144,7 +144,8 @@ namespace LoLMatchAccepterNet.LCU
                     }
                 }
             }
-            return false;
+            var gamePhase = await GetGamePhase();
+            return gamePhase == ChampSelect || gamePhase == InProgress;
         }
     }
 }
