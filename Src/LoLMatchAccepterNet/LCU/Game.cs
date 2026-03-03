@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using System.Text.Json;
 
 namespace LoLMatchAccepterNet.LCU
@@ -37,7 +37,7 @@ namespace LoLMatchAccepterNet.LCU
                     return true;
                 }
 
-                var spectatorResponse = await _client.GetAsync($"{_baseUrl}/lol-spectator/v1/spectate/active-games/for-summoner/0");
+                using var spectatorResponse = await _client.GetAsync($"{_baseUrl}/lol-spectator/v1/spectate/active-games/for-summoner/0");
                 if (spectatorResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     // Status 200 means there's an active game
@@ -107,11 +107,11 @@ namespace LoLMatchAccepterNet.LCU
 
         public async Task<string> GetGamePhase()
         {
-            var gameSessionResponse = await _client.GetAsync($"{_baseUrl}/lol-gameflow/v1/session");
+            using var gameSessionResponse = await _client.GetAsync($"{_baseUrl}/lol-gameflow/v1/session");
             if (gameSessionResponse.IsSuccessStatusCode)
             {
                 string content = await gameSessionResponse.Content.ReadAsStringAsync();
-                JsonDocument doc = JsonDocument.Parse(content);
+                using JsonDocument doc = JsonDocument.Parse(content);
 
                 if (doc.RootElement.TryGetProperty("phase", out JsonElement phase))
                 {
@@ -125,17 +125,17 @@ namespace LoLMatchAccepterNet.LCU
 
         public async Task<bool> WaitForQueue()
         {
-            var matchResponse = await _client.GetAsync($"{_baseUrl}/lol-matchmaking/v1/search");
+            using var matchResponse = await _client.GetAsync($"{_baseUrl}/lol-matchmaking/v1/search");
             if (matchResponse.IsSuccessStatusCode)
             {
                 string content = await matchResponse.Content.ReadAsStringAsync();
-                JsonDocument doc = JsonDocument.Parse(content);
+                using JsonDocument doc = JsonDocument.Parse(content);
 
                 doc.RootElement.TryGetProperty("searchState", out JsonElement searchState);
                 if (searchState.GetString() == "Found")
                 {
                     Console.WriteLine("Match found! Accepting...");
-                    var acceptResponse = await _client.PostAsync(
+                    using var acceptResponse = await _client.PostAsync(
                         $"{_baseUrl}/lol-matchmaking/v1/ready-check/accept",
                         null
                     );
@@ -160,7 +160,7 @@ namespace LoLMatchAccepterNet.LCU
                 await WaitUntilPhaseEnds(WaitingForStats);
                 await WaitUntilPhaseEnds(EndOfGame);
 
-                var playAgainResponse = await _client.PostAsync(
+                using var playAgainResponse = await _client.PostAsync(
                     $"{_baseUrl}/lol-lobby/v2/play-again",
                     null
                 );
