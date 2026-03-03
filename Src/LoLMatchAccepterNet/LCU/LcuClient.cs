@@ -18,6 +18,7 @@ namespace LeagueMatchAccepter
         private static partial Regex PortRegex();
 
         private readonly HttpClient _client;
+        private CancellationTokenSource? _cts;
         private bool disposedValue;
 
         public LcuClient()
@@ -98,14 +99,34 @@ namespace LeagueMatchAccepter
             Console.WriteLine("Auto-accept running. Press ESC to exit.");
             Console.WriteLine("Waiting for match...");
 
-            while (true)
+            _cts = new CancellationTokenSource();
+            var backgroundTask = Task.Run(() => AutoAcceptLoopAsync(game, _cts.Token));
+
+            // Main thread only checks for ESC input
+            while (!backgroundTask.IsCompleted)
             {
-                // Check if ESC key is pressed to exit
                 if (Console.KeyAvailable && Console.ReadKey(true).Key == ConsoleKey.Escape)
                 {
-                    return true;
+                    _cts.Cancel();
+                    break;
                 }
+                await Task.Delay(1000);
+            }
 
+            try
+            {
+                return await backgroundTask;
+            }
+            catch (OperationCanceledException)
+            {
+                return true;
+            }
+        }
+
+        private async Task<bool> AutoAcceptLoopAsync(Game game, CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
                 try
                 {
                     bool isMatchAccepted = await game.WaitForQueue();
@@ -133,18 +154,26 @@ namespace LeagueMatchAccepter
                         // If we're in a game, don't check for match acceptance
                         Console.WriteLine("Active game detected. Waiting until game ends...");
                         await game.WaitUntilGameEnds();
+                        await game.NavigateToLobby();
                         Console.WriteLine("Game ended. Resuming auto-accept...");
                     }
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
                 }
                 catch (Exception)
                 {
                     Console.WriteLine($"Error communicating with League client.");
-                    await Task.Delay(6000);
+                    await Task.Delay(6000, cancellationToken);
                     return false;
                 }
 
-                await Task.Delay(500);
+                await Task.Delay(500, cancellationToken);
             }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            return true;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -153,6 +182,8 @@ namespace LeagueMatchAccepter
             {
                 if (disposing)
                 {
+                    _cts?.Cancel();
+                    _cts?.Dispose();
                     _client.Dispose();
                     MatchFound = null;
                 }

@@ -1,5 +1,4 @@
-﻿using LeagueMatchAccepter;
-using LoLMatchAccepterNet.Notificator;
+using LeagueMatchAccepter;
 
 namespace LoLMatchAccepterNet
 {
@@ -15,30 +14,26 @@ namespace LoLMatchAccepterNet
                 Console.WriteLine("Searching for League of Legends client...");
                 bool manualExitInitiated = false;
                 bool isRetryingActive = false;
-                using (NotificatorServer notificatorServer = new())
+                while (!manualExitInitiated)
                 {
-                    while (!manualExitInitiated)
+                    using (LcuClient lcu = new())
                     {
-                        using (LcuClient lcu = new())
+                        if (!lcu.IsClientFound())
                         {
-                            if (!lcu.IsClientFound())
+                            if (!isRetryingActive)
                             {
-                                if (!isRetryingActive)
-                                {
-                                    Console.WriteLine("Failed to find League client. Retrying every 5 seconds...");
-                                    isRetryingActive = true;
-                                }
-                                await Task.Delay(5000); // Wait before retrying
-                                continue;
+                                Console.WriteLine("Failed to find League client. Retrying every 5 seconds...");
+                                isRetryingActive = true;
                             }
-                            isRetryingActive = false; // Reset flag if client found
-                            lcu.MatchFound += notificatorServer.SendNotification;
-                            manualExitInitiated = await lcu.AutoAccept();
+                            await Task.Delay(5000); // Wait before retrying
+                            continue;
                         }
+                        isRetryingActive = false; // Reset flag if client found
+                        manualExitInitiated = await lcu.AutoAccept();
                     }
-                    Console.WriteLine("Auto-accepter stopped. Press any key to exit...");
-                    Console.ReadKey();
                 }
+                Console.WriteLine("Auto-accepter stopped. Press any key to exit...");
+                Console.ReadKey();
             }
             catch (Exception ex)
             {

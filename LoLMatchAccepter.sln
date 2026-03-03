@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.7.34202.233
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11520.95 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
@@ -9,11 +9,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MatchNotificator", "Src\LoLMatchNotificator\MatchNotificator.csproj", "{BFD5716F-41DB-C092-C9CE-AE439BEE9874}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoLMatchAccepterNet", "Src\LoLMatchAccepterNet\LoLMatchAccepterNet.csproj", "{309804D0-07F4-20CD-5AD8-8814FB1E3E01}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoLMatchAccepterNet.Common", "Src\LoLMatchAccepterNet.Common\LoLMatchAccepterNet.Common.csproj", "{FFA66EF5-3233-5A2F-C887-FAFEF66F0BEA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,20 +17,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BFD5716F-41DB-C092-C9CE-AE439BEE9874}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BFD5716F-41DB-C092-C9CE-AE439BEE9874}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BFD5716F-41DB-C092-C9CE-AE439BEE9874}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{BFD5716F-41DB-C092-C9CE-AE439BEE9874}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BFD5716F-41DB-C092-C9CE-AE439BEE9874}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BFD5716F-41DB-C092-C9CE-AE439BEE9874}.Release|Any CPU.Deploy.0 = Release|Any CPU
 		{309804D0-07F4-20CD-5AD8-8814FB1E3E01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{309804D0-07F4-20CD-5AD8-8814FB1E3E01}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{309804D0-07F4-20CD-5AD8-8814FB1E3E01}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{309804D0-07F4-20CD-5AD8-8814FB1E3E01}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FFA66EF5-3233-5A2F-C887-FAFEF66F0BEA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FFA66EF5-3233-5A2F-C887-FAFEF66F0BEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FFA66EF5-3233-5A2F-C887-FAFEF66F0BEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FFA66EF5-3233-5A2F-C887-FAFEF66F0BEA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A8F0A18-D8AC-4FA7-A3B0-0F853BD47371}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A8F0A18-D8AC-4FA7-A3B0-0F853BD47371}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A8F0A18-D8AC-4FA7-A3B0-0F853BD47371}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A8F0A18-D8AC-4FA7-A3B0-0F853BD47371}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

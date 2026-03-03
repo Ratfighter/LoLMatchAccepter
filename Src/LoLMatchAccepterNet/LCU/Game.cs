@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Text;
+using System.Text.Json;
 
 namespace LoLMatchAccepterNet.LCU
 {
@@ -12,6 +13,8 @@ namespace LoLMatchAccepterNet.LCU
         public const string ReadyCheck = "ReadyCheck";
         public const string Matchmaking = "Matchmaking";
         public const string ChampSelect = "ChampSelect";
+        public const string EndOfGame = "EndOfGame";
+        public const string WaitingForStats = "WaitingForStats";
 
         private readonly HttpClient _client;
         private readonly string _baseUrl;
@@ -146,6 +149,32 @@ namespace LoLMatchAccepterNet.LCU
             }
             var gamePhase = await GetGamePhase();
             return gamePhase == ChampSelect || gamePhase == InProgress;
+        }
+
+        public async Task NavigateToLobby()
+        {
+            try
+            {
+                Console.WriteLine("🔄 Navigating to lobby...");
+
+                await WaitUntilPhaseEnds(WaitingForStats);
+                await WaitUntilPhaseEnds(EndOfGame);
+
+                var playAgainResponse = await _client.PostAsync(
+                    $"{_baseUrl}/lol-lobby/v2/play-again",
+                    null
+                );
+
+                if (playAgainResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("✅ Successfully navigated to lobby via play-again");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error navigating to lobby: {ex.Message}");
+            }
         }
     }
 }
