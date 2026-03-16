@@ -34,8 +34,9 @@ namespace LoLMatchAccepterNet.LCU
                     {
                         Console.WriteLine("Active game detected. Waiting until game ends...");
                         await _game.WaitUntilGameEnds();
+                        Console.WriteLine("Game ended. Navigating to lobby...");
                         await _game.NavigateToLobby();
-                        Console.WriteLine("Game ended. Resuming auto-accept...");
+                        Console.WriteLine("Resuming auto-accept...");
                     }
                 }
                 catch (OperationCanceledException)

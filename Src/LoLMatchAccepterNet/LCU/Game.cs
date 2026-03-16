@@ -69,7 +69,7 @@ namespace LoLMatchAccepterNet.LCU
                         return;
                     }
 
-                    if (gamePhase == "None" || gamePhase == "Lobby" || gamePhase == "Matchmaking")
+                    if (gamePhase == None || gamePhase == Lobby || gamePhase == Matchmaking || gamePhase == EndOfGame)
                     {
                         gameEnded = true;
                     }
@@ -155,10 +155,9 @@ namespace LoLMatchAccepterNet.LCU
         {
             try
             {
-                Console.WriteLine("🔄 Navigating to lobby...");
+                Console.WriteLine("Navigating to lobby...");
 
                 await WaitUntilPhaseEnds(WaitingForStats);
-                await WaitUntilPhaseEnds(EndOfGame);
 
                 using var playAgainResponse = await _client.PostAsync(
                     $"{_baseUrl}/lol-lobby/v2/play-again",
