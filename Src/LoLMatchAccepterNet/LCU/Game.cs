@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+using System.Text;
+using System.Text.Json;
 
 namespace LoLMatchAccepterNet.LCU
 {
@@ -12,6 +13,8 @@ namespace LoLMatchAccepterNet.LCU
         public const string ReadyCheck = "ReadyCheck";
         public const string Matchmaking = "Matchmaking";
         public const string ChampSelect = "ChampSelect";
+        public const string EndOfGame = "EndOfGame";
+        public const string WaitingForStats = "WaitingForStats";
 
         private readonly HttpClient _client;
         private readonly string _baseUrl;
@@ -34,7 +37,7 @@ namespace LoLMatchAccepterNet.LCU
                     return true;
                 }
 
-                var spectatorResponse = await _client.GetAsync($"{_baseUrl}/lol-spectator/v1/spectate/active-games/for-summoner/0");
+                using var spectatorResponse = await _client.GetAsync($"{_baseUrl}/lol-spectator/v1/spectate/active-games/for-summoner/0");
                 if (spectatorResponse.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     // Status 200 means there's an active game
@@ -66,7 +69,7 @@ namespace LoLMatchAccepterNet.LCU
                         return;
                     }
 
-                    if (gamePhase == "None" || gamePhase == "Lobby" || gamePhase == "Matchmaking")
+                    if (gamePhase == None || gamePhase == Lobby || gamePhase == Matchmaking || gamePhase == EndOfGame)
                     {
                         gameEnded = true;
                     }
@@ -104,11 +107,11 @@ namespace LoLMatchAccepterNet.LCU
 
         public async Task<string> GetGamePhase()
         {
-            var gameSessionResponse = await _client.GetAsync($"{_baseUrl}/lol-gameflow/v1/session");
+            using var gameSessionResponse = await _client.GetAsync($"{_baseUrl}/lol-gameflow/v1/session");
             if (gameSessionResponse.IsSuccessStatusCode)
             {
                 string content = await gameSessionResponse.Content.ReadAsStringAsync();
-                JsonDocument doc = JsonDocument.Parse(content);
+                using JsonDocument doc = JsonDocument.Parse(content);
 
                 if (doc.RootElement.TryGetProperty("phase", out JsonElement phase))
                 {
@@ -122,17 +125,17 @@ namespace LoLMatchAccepterNet.LCU
 
         public async Task<bool> WaitForQueue()
         {
-            var matchResponse = await _client.GetAsync($"{_baseUrl}/lol-matchmaking/v1/search");
+            using var matchResponse = await _client.GetAsync($"{_baseUrl}/lol-matchmaking/v1/search");
             if (matchResponse.IsSuccessStatusCode)
             {
                 string content = await matchResponse.Content.ReadAsStringAsync();
-                JsonDocument doc = JsonDocument.Parse(content);
+                using JsonDocument doc = JsonDocument.Parse(content);
 
                 doc.RootElement.TryGetProperty("searchState", out JsonElement searchState);
                 if (searchState.GetString() == "Found")
                 {
                     Console.WriteLine("Match found! Accepting...");
-                    var acceptResponse = await _client.PostAsync(
+                    using var acceptResponse = await _client.PostAsync(
                         $"{_baseUrl}/lol-matchmaking/v1/ready-check/accept",
                         null
                     );
@@ -146,6 +149,31 @@ namespace LoLMatchAccepterNet.LCU
             }
             var gamePhase = await GetGamePhase();
             return gamePhase == ChampSelect || gamePhase == InProgress;
+        }
+
+        public async Task NavigateToLobby()
+        {
+            try
+            {
+                Console.WriteLine("Navigating to lobby...");
+
+                await WaitUntilPhaseEnds(WaitingForStats);
+
+                using var playAgainResponse = await _client.PostAsync(
+                    $"{_baseUrl}/lol-lobby/v2/play-again",
+                    null
+                );
+
+                if (playAgainResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine("✅ Successfully navigated to lobby via play-again");
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error navigating to lobby: {ex.Message}");
+            }
         }
     }
 }
