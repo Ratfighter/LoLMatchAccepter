@@ -9,6 +9,7 @@ MatchAcceptService::MatchAcceptService(std::shared_ptr<Game> game) : _game(game)
 void MatchAcceptService::RunAutoAcceptLoop(std::atomic<bool>& cancelToken) {
     while (!cancelToken.load()) {
         try {
+            _game->StartQueue();
             bool isMatchAccepted = _game->WaitForQueue();
 
             if (isMatchAccepted) {

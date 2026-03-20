@@ -23,6 +23,7 @@ public:
     void WaitUntilGameEnds();
     std::string WaitUntilPhaseEnds(const std::vector<std::string>& gamePhases);
     std::string GetGamePhase();
+    void StartQueue();
     bool WaitForQueue();
     void NavigateToLobby();
 

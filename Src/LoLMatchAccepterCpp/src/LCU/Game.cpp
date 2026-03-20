@@ -42,7 +42,8 @@ void Game::WaitUntilGameEnds() {
             }
 
             if (gamePhase == None || gamePhase == Lobby || 
-                gamePhase == Matchmaking || gamePhase == EndOfGame) {
+                gamePhase == Matchmaking || gamePhase == EndOfGame || 
+                gamePhase == WaitingForStats) {
                 gameEnded = true;
             }
         }
@@ -92,6 +93,49 @@ std::string Game::GetGamePhase() {
     return "";
 }
 
+void Game::StartQueue() {
+    try {
+        // Check if we're in the lobby
+        std::string currentPhase = GetGamePhase();
+        if (currentPhase != Lobby) {
+            return;
+        }
+
+        // Get current lobby information
+        HttpResponse lobbyResponse = _client->Get("/lol-lobby/v2/lobby");
+
+        if (!lobbyResponse.IsSuccess() || lobbyResponse.body.empty()) {
+            return;
+        }
+
+        auto lobbyData = json::parse(lobbyResponse.body);
+
+        // Check if we are the lobby owner
+        if (lobbyData.contains("localMember") && lobbyData.contains("members")) {
+            bool isOwner = false;
+
+            if (lobbyData["localMember"].contains("isLeader")) {
+                isOwner = lobbyData["localMember"]["isLeader"].get<bool>();
+            }
+
+            if (isOwner) {
+                std::cout << "Starting queue as lobby owner..." << std::endl;
+                HttpResponse startQueueResult = _client->Post("/lol-lobby/v2/lobby/matchmaking/search");
+
+                if (startQueueResult.IsSuccess()) {
+                    std::cout << "Queue started successfully!" << std::endl;
+                } else {
+                    std::cout << "Failed to start queue (Status: " << startQueueResult.statusCode << ")" << std::endl;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+                }
+            }
+        }
+    }
+    catch (const std::exception& ex) {
+        std::cout << "Error starting queue: " << ex.what() << std::endl;
+    }
+}
+
 bool Game::WaitForQueue() {
     HttpResponse matchResponse = _client->Get("/lol-matchmaking/v1/search");
 
@@ -126,10 +170,19 @@ void Game::NavigateToLobby() {
 
         WaitUntilPhaseEnds({WaitingForStats});
 
+        std::cout << "Skipping honor screen..." << std::endl;
+        HttpResponse skipHonorResult = _client->Post("/lol-honor-v2/v1/honor-player");
+
+        if (skipHonorResult.IsSuccess()) {
+            std::cout << "Honor screen skipped" << std::endl;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
         HttpResponse playAgainResult = _client->Post("/lol-lobby/v2/play-again");
 
         if (playAgainResult.IsSuccess()) {
-            std::cout << "Successfully navigated to lobby via play-again" << std::endl;
+            std::cout << "Successfully navigated to lobby!" << std::endl;
             return;
         }
     }
